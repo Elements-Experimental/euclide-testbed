@@ -1,0 +1,8 @@
+# Changes here will be overwritten by Copier
+_commit: 3.0.5
+_src_path: gh:Elements-Experimental/euclide
+default_branch: dev
+metrics_enabled: true
+metrics_sheet_name: Sheet1
+project_name: euclide-testbed
+tech_stack: Python

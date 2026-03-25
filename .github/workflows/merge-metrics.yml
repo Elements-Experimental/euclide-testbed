@@ -1,0 +1,55 @@
+name: Merge Metrics
+
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  record-metrics:
+    if: github.event.pull_request.merged == true
+    permissions:
+      contents: read   # for actions/checkout and git log
+      actions: read    # for gh api .../actions/runs
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Collect metrics
+        id: metrics
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          MERGED_AT: ${{ github.event.pull_request.merged_at }}
+          PR_CREATED: ${{ github.event.pull_request.created_at }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          FILES_TOUCHED: ${{ github.event.pull_request.changed_files }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Save CI runs data to a file to avoid shell-quoting issues with JSON
+          gh api "repos/$REPO/actions/runs?head_sha=$HEAD_SHA&per_page=100" > /tmp/ci_runs.json
+          python3 .github/scripts/collect_metrics.py
+
+      - name: Append to Google Sheet
+        continue-on-error: true
+        env:
+          METRICS_SHEET_ID: ${{ secrets.METRICS_SHEET_ID }}
+          METRICS_SA_KEY: ${{ secrets.METRICS_SA_KEY }}
+          METRICS_SHEET_NAME: Sheet1
+          CYCLE_TIME: ${{ steps.metrics.outputs.cycle_time }}
+          TIME_TO_PASSING: ${{ steps.metrics.outputs.time_to_passing }}
+          RETRY_RATE: ${{ steps.metrics.outputs.retry_rate }}
+          FILES_TOUCHED: ${{ steps.metrics.outputs.files_touched }}
+          PR_NUMBER: ${{ steps.metrics.outputs.pr_number }}
+          PR_TITLE: ${{ steps.metrics.outputs.pr_title }}
+          PR_URL: ${{ steps.metrics.outputs.pr_url }}
+          PR_AUTHOR: ${{ steps.metrics.outputs.pr_author }}
+        run: |
+          pip install --quiet google-api-python-client google-auth
+          python3 .github/scripts/append_sheet.py

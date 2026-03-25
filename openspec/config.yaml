@@ -1,0 +1,7 @@
+# OpenSpec configuration for euclide-testbed
+
+schema: elements-impact
+
+context:
+  tech_stack: "Python"
+  testing_conventions: "add your project testing conventions here"

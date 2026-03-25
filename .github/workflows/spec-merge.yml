@@ -1,0 +1,134 @@
+name: Spec Merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - 'feat/**'
+
+jobs:
+  create-change-issue:
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'spec/')
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      FEAT_BRANCH: ${{ github.event.pull_request.base.ref }}
+      SPEC_AUTHOR: ${{ github.event.pull_request.user.login }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.ref }}
+
+      - name: Extract change slug
+        id: slug
+        run: |
+          HEAD_REF="${{ github.event.pull_request.head.ref }}"
+          echo "slug=${HEAD_REF#spec/}" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure spec-driven label exists
+        run: |
+          gh label create "spec-driven" --color "0075ca" --description "Created by OpenSpec workflow" || true
+
+      - name: Create change issue
+        id: issue
+        run: |
+          SLUG="${{ steps.slug.outputs.slug }}"
+          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**This is issue #PLACEHOLDER.** Always include this number in commit messages, e.g. \`feat(#PLACEHOLDER): your message\`."
+
+          ISSUE_URL=$(gh issue create \
+            --title "feat: ${SLUG}" \
+            --body "$BODY" \
+            --label "spec-driven")
+          ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
+          if [ -z "$ISSUE_NUMBER" ]; then
+            echo "ERROR: could not extract issue number from URL: $ISSUE_URL" >&2
+            exit 1
+          fi
+          echo "number=$ISSUE_NUMBER" >> "$GITHUB_OUTPUT"
+          echo "url=$ISSUE_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Update issue with its own number
+        run: |
+          ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
+          SLUG="${{ steps.slug.outputs.slug }}"
+          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**This is issue #${ISSUE_NUMBER}.** Always include this number in commit messages, e.g. \`feat(#${ISSUE_NUMBER}): your message\`."
+
+          REPO="${{ github.repository }}"
+          jq -n --arg body "$BODY" '{body: $body}' | \
+            gh api "repos/${REPO}/issues/${ISSUE_NUMBER}" --method PATCH --input -
+
+      - name: Create feat PR
+        id: feat_pr
+        run: |
+          SLUG="${{ steps.slug.outputs.slug }}"
+          ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
+          PROPOSAL="openspec/changes/${SLUG}/proposal.md"
+          if [ -f "$PROPOSAL" ]; then
+            PR_BODY=$(cat "$PROPOSAL")
+          else
+            PR_BODY="No proposal.md found for change \`${SLUG}\`."
+          fi
+          PR_BODY="${PR_BODY}"$'\n\n---\ncloses #'"${ISSUE_NUMBER}"
+
+          REPO="${{ github.repository }}"
+
+          # Use REST API to avoid GraphQL partial-error on createPullRequest.pullRequest
+          # Use jq to build the JSON payload so all characters are properly escaped
+          PAYLOAD=$(jq -n \
+            --arg title "feat: ${SLUG}" \
+            --arg head "${FEAT_BRANCH}" \
+            --arg base "dev" \
+            --arg body "${PR_BODY}" \
+            '{title: $title, head: $head, base: $base, body: $body, draft: true}')
+
+          PR_URL=$(echo "$PAYLOAD" | gh api "repos/${REPO}/pulls" \
+            --method POST --input - --jq '.html_url') || true
+
+          # Idempotency fallback: if create failed (e.g. PR already exists), fetch existing
+          if [ -z "$PR_URL" ]; then
+            PR_URL=$(gh pr list \
+              --head "${FEAT_BRANCH}" \
+              --base "dev" \
+              --state open \
+              --json url \
+              --jq '.[0].url')
+          fi
+
+          if [ -z "$PR_URL" ]; then
+            echo "ERROR: failed to create or find PR for ${FEAT_BRANCH} → dev" >&2
+            exit 1
+          fi
+
+          echo "url=${PR_URL}" >> "$GITHUB_OUTPUT"
+
+          # Belt-and-suspenders: re-apply body so closes #N is set even if PR pre-existed
+          # Write to a temp file to avoid arg-length and quoting issues
+          BODY_FILE=$(mktemp)
+          printf '%s' "${PR_BODY}" > "$BODY_FILE"
+          gh pr edit "$PR_URL" --body-file "$BODY_FILE"
+          rm -f "$BODY_FILE"
+
+      - name: Notify author
+        run: |
+          ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
+          PR_URL="${{ steps.feat_pr.outputs.url }}"
+          gh issue comment "$ISSUE_NUMBER" \
+            --body "@${SPEC_AUTHOR} The spec has been merged. Change issue: #${ISSUE_NUMBER}. Draft PR: ${PR_URL}. Assign the issue to an agent to start implementation."
+
+      - name: Verify issue link
+        run: |
+          PR_URL="${{ steps.feat_pr.outputs.url }}"
+          ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
+          LINKED=$(gh pr view "$PR_URL" --json closingIssuesReferences \
+            --jq "[.closingIssuesReferences[].number == ${ISSUE_NUMBER}] | any")
+          if [ "$LINKED" != "true" ]; then
+            echo "WARNING: GitHub did not register closes #${ISSUE_NUMBER} on ${PR_URL}" >&2
+            echo "PR body excerpt:"
+            gh pr view "$PR_URL" --json body --jq '.body | .[-200:]'
+          else
+            echo "✓ Issue #${ISSUE_NUMBER} linked to PR via closes keyword"
+          fi
