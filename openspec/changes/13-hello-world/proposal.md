@@ -16,6 +16,6 @@ This change introduces a basic HTML page that displays "Hello World" to the user
 
 ## Impact
 
-- New HTML file will be added to the project
+- New HTML file will be added at `src/index.html`
 - This is a minimal change with no dependencies on existing code
 - Provides a foundation for future HTML-based features

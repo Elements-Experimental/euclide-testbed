@@ -4,10 +4,10 @@
 The system must provide a valid HTML page that displays the text "Hello World" when opened in a web browser.
 
 ### Requirement: Valid HTML structure
-The HTML page must follow HTML5 standard structure with proper DOCTYPE, html, head, and body tags.
+The HTML page must follow HTML5 standard structure with proper DOCTYPE, html, head, and body tags. The `<head>` must include `<meta charset="UTF-8">` and `<title>Hello World</title>`.
 
 ### Requirement: Plain text content
-The page must display "Hello World" as plain text content without requiring any additional resources, styling, or scripts.
+The page must display "Hello World" as plain text content without requiring any additional resources, styling, or scripts. Standard `<head>` metadata (`<meta>`, `<title>`) is permitted and does not violate this requirement.
 
 ## Scenarios
 
@@ -18,15 +18,17 @@ The page must display "Hello World" as plain text content without requiring any 
 - **AND** the page loads without errors
 
 #### Scenario: HTML structure is valid
-- **GIVEN** the hello world HTML file has been created
-- **WHEN** the HTML is validated against HTML5 standards
-- **THEN** the HTML passes validation with no errors
+- **GIVEN** the hello world HTML file has been created at `src/index.html`
+- **WHEN** a developer inspects the file
+- **THEN** it contains a valid HTML5 DOCTYPE declaration
+- **AND** it has `<html>`, `<head>`, and `<body>` tags
+- **AND** `<head>` includes `<meta charset="UTF-8">` and `<title>Hello World</title>`
 
 #### Scenario: Page displays correct content
 - **GIVEN** the hello world HTML file is opened in a browser
 - **WHEN** the page is rendered
-- **THEN** the visible text content is exactly "Hello World"
-- **AND** no additional UI elements or decorations are present
+- **THEN** the visible body text content is exactly "Hello World"
+- **AND** no additional visible UI elements or decorations are present in the page body
 
 ## Out of scope
 

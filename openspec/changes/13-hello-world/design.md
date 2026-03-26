@@ -17,7 +17,7 @@ This is the first feature being added to euclide-testbed. The project currently 
 
 ## Decisions
 
-The implementation will use a standalone HTML file with minimal markup. This approach:
+The implementation will use a standalone HTML file at `src/index.html` with minimal markup. This approach:
 - Keeps the initial implementation as simple as possible
 - Requires no build tools or dependencies
 - Can be opened directly in any browser
