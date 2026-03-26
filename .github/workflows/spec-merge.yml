@@ -8,7 +8,7 @@ on:
 
 jobs:
   create-change-issue:
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.head.ref, 'spec/')
+    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.title, 'spec:')
     permissions:
       contents: read
       issues: write
@@ -26,8 +26,9 @@ jobs:
       - name: Extract change slug
         id: slug
         run: |
-          HEAD_REF="${{ github.event.pull_request.head.ref }}"
-          echo "slug=${HEAD_REF#spec/}" >> "$GITHUB_OUTPUT"
+          # Slug is the part after "spec: " in the PR title — works regardless of agent branch naming
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          echo "slug=${PR_TITLE#spec: }" >> "$GITHUB_OUTPUT"
 
       - name: Read product issue from .meta
         id: meta

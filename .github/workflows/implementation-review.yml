@@ -8,8 +8,8 @@ on:
 
 jobs:
   request-review:
-    # Only run for implementation PRs — not spec/ PRs
-    if: "!startsWith(github.event.pull_request.head.ref, 'spec/')"
+    # Only run for implementation PRs — not spec PRs (which have title starting with "spec:")
+    if: "!startsWith(github.event.pull_request.title, 'spec:')"
     permissions:
       contents: read
       pull-requests: write
@@ -41,11 +41,12 @@ jobs:
             REVIEW_LINE="Consider requesting a **Copilot code review** or assign a human reviewer."
           fi
 
-          gh pr comment "$PR_NUMBER" --body "## Implementation ready for review
+          printf -v BODY '%b' \
+            "## Implementation ready for review\n\n" \
+            "${REVIEW_LINE}\n\n" \
+            "**Next steps for the developer:**\n" \
+            "1. Address any review comments\n" \
+            "2. Pull the branch locally and run \`/opsx:walk\` to step through the test protocol with human checkpoints\n" \
+            "3. After all protocol steps pass, run \`/opsx:ship\` to squash commits, archive the change, and open the final PR"
 
-${REVIEW_LINE}
-
-**Next steps for the developer:**
-1. Address any review comments
-2. Pull the branch locally and run \`/opsx:walk\` to step through the test protocol with human checkpoints
-3. After all protocol steps pass, run \`/opsx:ship\` to squash commits, archive the change, and open the final PR"
+          gh pr comment "$PR_NUMBER" --body "$BODY"

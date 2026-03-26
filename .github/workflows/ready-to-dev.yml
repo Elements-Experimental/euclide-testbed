@@ -84,20 +84,28 @@ jobs:
           FEAT_BRANCH="${{ steps.slug.outputs.feat_branch }}"
           REPO="${{ github.repository }}"
 
-          printf -v BODY '%b' \
+          BODY=$(printf '%b' \
             "## Spec creation task\n\n" \
             "**Change slug:** \`${SLUG}\`\n" \
             "**Feature branch:** \`${FEAT_BRANCH}\`\n" \
             "**Product issue:** #${ISSUE_NUMBER}\n\n" \
             "### Instructions\n\n" \
-            "Your job is to create the spec artifacts for this change.\n\n" \
-            "1. Check out \`${FEAT_BRANCH}\`\n" \
-            "2. Create branch \`spec/${SLUG}\` off \`${FEAT_BRANCH}\`\n" \
-            "3. Follow \`.claude/commands/opsx/spec-dispatch-target.md\` (or run \`/opsx:propose ${SLUG}\`) to generate artifacts under \`openspec/changes/${SLUG}/\`\n" \
-            "4. Add a **Grey Areas & Open Questions** section to the spec PR body, listing any ambiguities found\n" \
-            "5. Open a PR from \`spec/${SLUG}\` → \`${FEAT_BRANCH}\`, title \`spec: ${SLUG}\`, label it \`spec\`\n\n" \
-            "See \`.claude/skills/openspec-propose/SKILL.md\` for the propose skill.\n\n" \
-            "A developer can also run \`/opsx:dispatch-spec ${SLUG}\` locally to re-dispatch this task."
+            "Your job is to create the OpenSpec artifacts for this change.\n\n" \
+            "1. Follow \`.claude/skills/openspec-propose/SKILL.md\` to generate artifacts under \`openspec/changes/${SLUG}/\`\n" \
+            "   - The change name is \`${SLUG}\` — do not ask for user input\n" \
+            "   - Base the artifacts on the product issue linked above\n" \
+            "   - If anything is ambiguous, note it in the Grey Areas section of the PR (do not ask the user)\n" \
+            "2. Your PR must be as such:\n" \
+            "   - Title: \`spec: ${SLUG}\` (required — CI uses this to identify spec PRs)\n" \
+            "   - Label: \`spec\`\n" \
+            "   - Body: use \`.github/PULL_REQUEST_TEMPLATE/spec.md\` as the template\n" \
+            "     - Paste the contents of \`openspec/changes/${SLUG}/proposal.md\` into the Proposal section\n" \
+            "     - Fill in the Grey Areas section with any ambiguities found\n" \
+            "     - Set the product issue link to #${ISSUE_NUMBER}\n\n" \
+            "### Guardrails\n\n" \
+            "- Do not implement any code — spec artifacts only\n" \
+            "- Do not close or merge the PR — a human will review it first\n" \
+            "- Every requirement must have at least one scenario in Given/When/Then format")
 
           ISSUE_URL=$(gh issue create \
             --title "spec: ${SLUG}" \
@@ -123,15 +131,18 @@ jobs:
 
       - name: Comment on product issue
         run: |
-          SLUG="${{ steps.slug.outputs.slug }}"
           FEAT_BRANCH="${{ steps.slug.outputs.feat_branch }}"
           EXISTING="${{ steps.existing_spec.outputs.issue_number }}"
           SPEC_ISSUE_NUMBER="${{ steps.spec_issue.outputs.number }}"
 
           if [ -n "$EXISTING" ]; then
-            COMMENT="Spec task already exists: #${EXISTING}. Feature branch: \`${FEAT_BRANCH}\`. Assign #${EXISTING} to a coding agent, or run \`/opsx:dispatch-spec ${SLUG}\` locally to re-dispatch."
+            printf -v COMMENT '%b' \
+              "Spec task already exists: #${EXISTING}. Feature branch: \`${FEAT_BRANCH}\`.\n\n" \
+              "Assign #${EXISTING} to a coding agent to generate spec artifacts and open a spec PR."
           else
-            COMMENT="Spec task created: #${SPEC_ISSUE_NUMBER}. Feature branch \`${FEAT_BRANCH}\` is ready.\n\n**Next steps:**\n- Assign #${SPEC_ISSUE_NUMBER} to a coding agent (GitHub Copilot, Claude, etc.) to generate spec artifacts and open a spec PR\n- Or run \`/opsx:dispatch-spec ${SLUG}\` locally to dispatch manually"
+            printf -v COMMENT '%b' \
+              "Spec task created: #${SPEC_ISSUE_NUMBER}. Feature branch \`${FEAT_BRANCH}\` is ready.\n\n" \
+              "**Next steps:** assign #${SPEC_ISSUE_NUMBER} to a coding agent (GitHub Copilot, Claude, etc.) to generate spec artifacts and open a spec PR."
           fi
 
           gh issue comment "$ISSUE_NUMBER" --body "$COMMENT"
