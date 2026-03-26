@@ -1,14 +1,17 @@
 # euclide-testbed
 
-<!-- Add a short project description here -->
+A testbed repository for demonstrating OpenSpec workflow and implementation patterns.
 
 ## Quickstart
 
-<!-- Add run/start instructions here, e.g.:
-```bash
-make install && make dev
-```
--->
+To view the Hello World page:
+
+1. Open `index.html` directly in your web browser, or
+2. Serve the repository root with any HTTP server:
+   ```bash
+   python3 -m http.server 8000
+   # Then open http://localhost:8000 in your browser
+   ```
 
 ## Docs
 
