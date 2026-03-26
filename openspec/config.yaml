@@ -3,5 +3,5 @@
 schema: elements-impact
 
 context:
-  tech_stack: "Python"
+  tech_stack: "Markdown"
   testing_conventions: "add your project testing conventions here"

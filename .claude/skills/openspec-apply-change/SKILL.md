@@ -46,7 +46,7 @@ Implement tasks from an OpenSpec change.
 
    **Handle states:**
    - If `state: "blocked"` (missing artifacts): show message, suggest using openspec-continue-change
-   - If `state: "all_done"`: congratulate, suggest archive
+   - If `state: "all_done"`: congratulate, proceed to write protocol.md (step 7)
    - Otherwise: proceed to implementation
 
 4. **Read context files**
@@ -79,12 +79,24 @@ Implement tasks from an OpenSpec change.
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
-7. **On completion or pause, show status**
+7. **On all tasks complete: write protocol.md**
+
+   Write `openspec/changes/<name>/protocol.md` using the template at `openspec/schemas/elements-impact/templates/protocol.md`. For each spec scenario, create a step with a concrete action, expected result, and `<!-- HUMAN CHECKPOINT -->` marker. Use `- [ ]` checkboxes (do NOT pre-check them).
+
+   Commit: `chore(<name>): add test protocol`
+
+8. **Open a draft PR**
+
+   ```bash
+   gh pr create --head <branch> --base feat/<slug> --title "feat: <slug>" --draft --body "Implementation of <slug>."
+   ```
+
+9. **On completion or pause, show status**
 
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
+   - If all done: "Protocol written, draft PR opened. Developer runs openspec-walk to verify, then openspec-ship to finalize."
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -115,7 +127,10 @@ Working on task 4/7: <task description>
 - [x] Task 2
 ...
 
-All tasks complete! Ready to archive this change.
+✓ protocol.md written
+✓ Draft PR opened: <PR-URL>
+
+Developer: run openspec-walk <change-name> to verify, then openspec-ship <change-name> to finalize.
 ```
 
 **Output On Pause (Issue Encountered)**
@@ -147,6 +162,8 @@ What would you like to do?
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements - don't guess
 - Use contextFiles from CLI output, don't assume specific file names
+- **Do not run archive** — archiving is done by the developer via openspec-ship after human verification
+- Do not pre-check `- [ ]` items in protocol.md
 
 **Fluid Workflow Integration**
 

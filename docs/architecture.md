@@ -2,7 +2,7 @@
 
 ## Tech stack
 
-Python
+Markdown
 
 ## Overview
 

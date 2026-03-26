@@ -5,9 +5,11 @@ category: Workflow
 tags: [workflow, verify, experimental]
 ---
 
-Verify that an implementation matches the change artifacts (specs, tasks, design).
+Verify that an implementation matches the change artifacts (specs, tasks, design, protocol).
 
-**Input**: Optionally specify a change name after `/opsx:verify` (e.g., `/opsx:verify add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
+This command is run: (a) manually by the developer, (b) at the end of `/opsx:walk` after all protocol steps pass, and (c) as a quality gate before the feat/→dev PR is reviewed.
+
+**Input**: Optionally specify a change slug (e.g., `/opsx:verify 42-add-auth`). If omitted, check if it can be inferred from conversation context. If vague or ambiguous you MUST prompt for available changes.
 
 **Steps**
 
@@ -55,6 +57,14 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
    - If incomplete tasks exist:
      - Add CRITICAL issue for each incomplete task
      - Recommendation: "Complete task: <description>" or "Mark as done if already implemented"
+
+   **Protocol Presence**:
+   - Check if `openspec/changes/<name>/protocol.md` exists
+   - If missing: add WARNING: "No protocol.md found — the test protocol has not been written"
+     - Recommendation: "Write the protocol using the template at `openspec/schemas/elements-impact/templates/protocol.md`"
+   - If present: count `<!-- HUMAN CHECKPOINT -->` markers and total `- [ ]` steps
+     - If 0 human checkpoints: add WARNING: "Protocol has no human checkpoints — add `<!-- HUMAN CHECKPOINT -->` to steps requiring human judgment"
+     - Report: "Protocol: N steps, M human checkpoints"
 
    **Spec Coverage**:
    - If delta specs exist in `openspec/changes/<name>/specs/`:
@@ -110,11 +120,11 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
    ## Verification Report: <change-name>
 
    ### Summary
-   | Dimension    | Status           |
-   |--------------|------------------|
-   | Completeness | X/Y tasks, N reqs|
-   | Correctness  | M/N reqs covered |
-   | Coherence    | Followed/Issues  |
+   | Dimension    | Status                       |
+   |--------------|------------------------------|
+   | Completeness | X/Y tasks, N reqs, protocol  |
+   | Correctness  | M/N reqs covered             |
+   | Coherence    | Followed/Issues              |
    ```
 
    **Issues by Priority**:

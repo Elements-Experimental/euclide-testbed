@@ -242,10 +242,42 @@ artifacts:
     requires:
       - specs
       - design
+  - id: protocol
+    generates: protocol.md
+    description: Step-by-step test protocol with human checkpoints for developer verification
+    template: protocol.md
+    instruction: >
+      Write a test protocol that walks a developer through verifying the implementation manually.
+
+
+      Guidelines:
+
+      - Group steps by feature area under ## numbered headings
+
+      - Use `<!-- HUMAN CHECKPOINT -->` on any step that requires human judgment or observation
+
+      - Steps should be concrete actions (e.g. "Navigate to screen X", "Click button Y")
+
+      - Each step MUST include an **Expected** line describing what should happen
+
+      - Reference the relevant spec scenarios (e.g. `_(AC: specs/feature/spec.md § Scenario: X)_`) where applicable
+
+      - Order steps from setup through core flows to edge cases
+
+      - Use `- [ ]` checkboxes so the walk command can track progress
+
+
+      This protocol is used by the developer with `/opsx:walk` after implementation.
+
+      Agents should NOT mark steps as done — that is for the human developer.
+    requires:
+      - tasks
 apply:
   requires:
     - tasks
   tracks: tasks.md
   instruction: |
     Read context files, work through pending tasks, mark complete as you go.
+    After all tasks are complete, write protocol.md using the protocol artifact template.
+    Then open a draft PR to the feat/ branch.
     Pause if you hit blockers or need clarification.

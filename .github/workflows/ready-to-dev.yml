@@ -1,0 +1,137 @@
+name: Ready to Dev
+
+on:
+  issues:
+    types: [labeled]
+
+jobs:
+  create-spec-task:
+    if: github.event.label.name == 'ready to dev'
+    permissions:
+      contents: write
+      issues: write
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
+      ISSUE_TITLE: ${{ github.event.issue.title }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: "dev"
+
+      - name: Derive slug from issue
+        id: slug
+        run: |
+          # Slugify: prepend issue number, lowercase, replace non-alphanumeric with hyphens,
+          # collapse consecutive hyphens, trim leading/trailing, truncate title portion at 50 chars
+          TITLE_SLUG=$(echo "$ISSUE_TITLE" \
+            | tr '[:upper:]' '[:lower:]' \
+            | sed 's/[^a-z0-9]/-/g' \
+            | sed 's/-\+/-/g' \
+            | sed 's/^-//;s/-$//' \
+            | cut -c1-50)
+
+          SLUG="${ISSUE_NUMBER}-${TITLE_SLUG}"
+          echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
+          echo "feat_branch=feat/${SLUG}" >> "$GITHUB_OUTPUT"
+
+      - name: Create feat/ branch with .meta file
+        id: branch
+        run: |
+          FEAT_BRANCH="${{ steps.slug.outputs.feat_branch }}"
+          SLUG="${{ steps.slug.outputs.slug }}"
+
+          if git ls-remote --exit-code --heads origin "$FEAT_BRANCH" > /dev/null 2>&1; then
+            echo "Branch $FEAT_BRANCH already exists — skipping creation"
+            echo "created=false" >> "$GITHUB_OUTPUT"
+          else
+            git checkout -b "$FEAT_BRANCH"
+
+            # Write .meta so downstream workflows can find the product issue number
+            mkdir -p "openspec/changes/${SLUG}"
+            printf 'product_issue=%s\n' "$ISSUE_NUMBER" > "openspec/changes/${SLUG}/.meta"
+
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add "openspec/changes/${SLUG}/.meta"
+            git commit -m "chore: initialise change directory for #${ISSUE_NUMBER}"
+            git push -u origin "$FEAT_BRANCH"
+            echo "created=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Ensure labels exist
+        run: |
+          gh label create "spec-agent" --color "e4e669" --description "Spec creation task for an AI agent" || true
+
+      - name: Check for existing spec-agent issue
+        id: existing_spec
+        run: |
+          SLUG="${{ steps.slug.outputs.slug }}"
+          EXISTING=$(gh issue list \
+            --label "spec-agent" \
+            --state open \
+            --search "spec: ${SLUG} in:title" \
+            --json number \
+            --jq '.[0].number // empty')
+          echo "issue_number=${EXISTING}" >> "$GITHUB_OUTPUT"
+
+      - name: Create spec-agent issue
+        id: spec_issue
+        if: steps.existing_spec.outputs.issue_number == ''
+        run: |
+          SLUG="${{ steps.slug.outputs.slug }}"
+          FEAT_BRANCH="${{ steps.slug.outputs.feat_branch }}"
+          REPO="${{ github.repository }}"
+
+          printf -v BODY '%b' \
+            "## Spec creation task\n\n" \
+            "**Change slug:** \`${SLUG}\`\n" \
+            "**Feature branch:** \`${FEAT_BRANCH}\`\n" \
+            "**Product issue:** #${ISSUE_NUMBER}\n\n" \
+            "### Instructions\n\n" \
+            "Your job is to create the spec artifacts for this change.\n\n" \
+            "1. Check out \`${FEAT_BRANCH}\`\n" \
+            "2. Create branch \`spec/${SLUG}\` off \`${FEAT_BRANCH}\`\n" \
+            "3. Follow \`.claude/commands/opsx/spec-dispatch-target.md\` (or run \`/opsx:propose ${SLUG}\`) to generate artifacts under \`openspec/changes/${SLUG}/\`\n" \
+            "4. Add a **Grey Areas & Open Questions** section to the spec PR body, listing any ambiguities found\n" \
+            "5. Open a PR from \`spec/${SLUG}\` → \`${FEAT_BRANCH}\`, title \`spec: ${SLUG}\`, label it \`spec\`\n\n" \
+            "See \`.claude/skills/openspec-propose/SKILL.md\` for the propose skill.\n\n" \
+            "A developer can also run \`/opsx:dispatch-spec ${SLUG}\` locally to re-dispatch this task."
+
+          ISSUE_URL=$(gh issue create \
+            --title "spec: ${SLUG}" \
+            --body "$BODY" \
+            --label "spec-agent")
+          ISSUE_NUMBER_NEW=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
+          if [ -z "$ISSUE_NUMBER_NEW" ]; then
+            echo "ERROR: could not extract issue number from URL: $ISSUE_URL" >&2
+            exit 1
+          fi
+          echo "number=$ISSUE_NUMBER_NEW" >> "$GITHUB_OUTPUT"
+          echo "url=$ISSUE_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Link spec-agent issue as sub-issue of product issue
+        if: steps.existing_spec.outputs.issue_number == ''
+        run: |
+          REPO="${{ github.repository }}"
+          CHILD_NUMBER="${{ steps.spec_issue.outputs.number }}"
+          gh api "repos/${REPO}/issues/${ISSUE_NUMBER}/sub_issues" \
+            --method POST \
+            --field sub_issue_id="$CHILD_NUMBER" || \
+            echo "WARNING: sub-issue API unavailable — link manually (requires GitHub plan support)"
+
+      - name: Comment on product issue
+        run: |
+          SLUG="${{ steps.slug.outputs.slug }}"
+          FEAT_BRANCH="${{ steps.slug.outputs.feat_branch }}"
+          EXISTING="${{ steps.existing_spec.outputs.issue_number }}"
+          SPEC_ISSUE_NUMBER="${{ steps.spec_issue.outputs.number }}"
+
+          if [ -n "$EXISTING" ]; then
+            COMMENT="Spec task already exists: #${EXISTING}. Feature branch: \`${FEAT_BRANCH}\`. Assign #${EXISTING} to a coding agent, or run \`/opsx:dispatch-spec ${SLUG}\` locally to re-dispatch."
+          else
+            COMMENT="Spec task created: #${SPEC_ISSUE_NUMBER}. Feature branch \`${FEAT_BRANCH}\` is ready.\n\n**Next steps:**\n- Assign #${SPEC_ISSUE_NUMBER} to a coding agent (GitHub Copilot, Claude, etc.) to generate spec artifacts and open a spec PR\n- Or run \`/opsx:dispatch-spec ${SLUG}\` locally to dispatch manually"
+          fi
+
+          gh issue comment "$ISSUE_NUMBER" --body "$COMMENT"

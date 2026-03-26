@@ -17,7 +17,7 @@ Each merged PR appends one row to the configured Google Sheet.
 | `pr_url` | string | URL of the pull request |
 | `pr_author` | string | GitHub login of the PR author |
 
-Rows are appended to the tab named **`Sheet1`**. If your sheet tab has a different name, re-run `copier update` and set `metrics_sheet_name` to match.
+Rows are appended to the tab named **`review_dashboard`**. If your sheet tab has a different name, re-run `copier update` and set `metrics_sheet_name` to match.
 
 Create the sheet's header row manually using these exact column names (in order):
 `timestamp`, `project`, `pr_number`, `cycle_time`, `time_to_passing_tests`, `retry_rate`, `files_touched`, `pr_title`, `pr_url`, `pr_author`

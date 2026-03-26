@@ -29,6 +29,18 @@ jobs:
           HEAD_REF="${{ github.event.pull_request.head.ref }}"
           echo "slug=${HEAD_REF#spec/}" >> "$GITHUB_OUTPUT"
 
+      - name: Read product issue from .meta
+        id: meta
+        run: |
+          SLUG="${{ steps.slug.outputs.slug }}"
+          META_FILE="openspec/changes/${SLUG}/.meta"
+          if [ -f "$META_FILE" ]; then
+            PRODUCT_ISSUE=$(grep '^product_issue=' "$META_FILE" | cut -d= -f2)
+            echo "product_issue=${PRODUCT_ISSUE}" >> "$GITHUB_OUTPUT"
+          else
+            echo "product_issue=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Ensure spec-driven label exists
         run: |
           gh label create "spec-driven" --color "0075ca" --description "Created by OpenSpec workflow" || true
@@ -37,7 +49,7 @@ jobs:
         id: issue
         run: |
           SLUG="${{ steps.slug.outputs.slug }}"
-          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**This is issue #PLACEHOLDER.** Always include this number in commit messages, e.g. \`feat(#PLACEHOLDER): your message\`."
+          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**This is issue #PLACEHOLDER.** Always include this number in commit messages, e.g. \`feat(#PLACEHOLDER): your message\`."
 
           ISSUE_URL=$(gh issue create \
             --title "feat: ${SLUG}" \
@@ -55,11 +67,25 @@ jobs:
         run: |
           ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
           SLUG="${{ steps.slug.outputs.slug }}"
-          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**This is issue #${ISSUE_NUMBER}.** Always include this number in commit messages, e.g. \`feat(#${ISSUE_NUMBER}): your message\`."
+          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**This is issue #${ISSUE_NUMBER}.** Always include this number in commit messages, e.g. \`feat(#${ISSUE_NUMBER}): your message\`."
 
           REPO="${{ github.repository }}"
           jq -n --arg body "$BODY" '{body: $body}' | \
             gh api "repos/${REPO}/issues/${ISSUE_NUMBER}" --method PATCH --input -
+
+      - name: Link implementation issue as sub-issue of product issue
+        run: |
+          PRODUCT_ISSUE="${{ steps.meta.outputs.product_issue }}"
+          IMPL_ISSUE="${{ steps.issue.outputs.number }}"
+          REPO="${{ github.repository }}"
+          if [ -n "$PRODUCT_ISSUE" ]; then
+            gh api "repos/${REPO}/issues/${PRODUCT_ISSUE}/sub_issues" \
+              --method POST \
+              --field sub_issue_id="$IMPL_ISSUE" || \
+              echo "WARNING: sub-issue API unavailable — link manually"
+          else
+            echo "No product issue found in .meta — skipping sub-issue link"
+          fi
 
       - name: Create feat PR
         id: feat_pr

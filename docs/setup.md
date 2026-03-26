@@ -28,7 +28,7 @@ Complete after `copier copy --trust`:
 - [ ] Configure Google Sheet for metrics: follow the instructions in `docs/metrics.md`
 - [ ] Add `METRICS_SHEET_ID` secret — Google Sheet ID (from the sheet URL)
 - [ ] Add `METRICS_SA_KEY` secret — base64-encoded service account JSON key
-- [ ] Confirm the sheet tab is named `Sheet1` (rename the tab or re-run `copier update` with a different value if needed)
+- [ ] Confirm the sheet tab is named `review_dashboard` (rename the tab or re-run `copier update` with a different value if needed)
 
 
 ## Updating

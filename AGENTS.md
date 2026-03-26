@@ -1,12 +1,5 @@
 # euclide-testbed — Agent Guidelines
 
-## Reference
-
-| Resource | Purpose |
-|---|---|
-| `docs/reference/commands.md` | Full `/opsx:*` command reference |
-| `docs/reference/branch-workflow.md` | End-to-end branch and issue workflow |
-
 ## Repo map
 
 | Path | Purpose |
@@ -33,16 +26,26 @@
 5. Update relevant docs; if none fit, add one
 6. Commit: `type(#N): description` — use the issue number from the issue body; do not invent one
 7. Update the task checkbox to `[x]` immediately after completing each task
-8. On the final task: archive with `/opsx:archive` (`.claude/commands/opsx/archive.md`)
+8. On the final task: write `openspec/changes/<slug>/protocol.md` (see below), then open a draft PR to `feat/<slug>`
 9. If blocked at any point: open a draft PR immediately with a clear blocker description
 
-## Archive is part of the task
+## Writing protocol.md
 
-A change is not complete until it has been archived. Run `/opsx:archive` (`.claude/commands/opsx/archive.md`) on the final task — this is a completion requirement, not an optional step. Do not consider the task done, open a PR for review, or close the issue unless the change directory has been moved to `openspec/changes/archive/`.
+After all tasks are complete, write the test protocol at `openspec/changes/<slug>/protocol.md` using the template at `openspec/schemas/elements-impact/templates/protocol.md`.
+
+- Group steps by feature area
+- Mark each step that requires human judgment with `<!-- HUMAN CHECKPOINT -->`
+- Each step MUST have a concrete action and an **Expected** result
+- Link steps to spec scenarios where applicable: `_(AC: specs/<capability>/spec.md § Scenario: X)_`
+- Use `- [ ]` checkboxes — **do not pre-check them**; the developer runs the protocol, not the agent
+
+## Archiving is done by the developer
+
+**Do not run `/opsx:archive`** — archiving happens after the developer has run `/opsx:walk` and verified the implementation. The developer runs `/opsx:ship` to archive, squash commits, and open the final PR.
 
 ## Documentation and tests are part of the task
 
-Any change must be accompanied by updated documentation (specs, `docs/`, `README.md`,`AGENTS.md`, or whatever is relevant) in the same commit or PR — not as a follow-up. Tests must be written for every change, covering all acceptance criteria and edge cases. If a case genuinely cannot be automated, state it explicitly in the PR's "Test protocol" section with a reason.
+Any change must be accompanied by updated documentation (specs, `docs/`, `README.md`, `AGENTS.md`, or whatever is relevant) in the same commit or PR — not as a follow-up. Tests must be written for every change, covering all acceptance criteria and edge cases. If a case genuinely cannot be automated, state it explicitly in the PR's "Test protocol" section with a reason.
 
 ## Guardrails
 
@@ -51,4 +54,4 @@ Any change must be accompanied by updated documentation (specs, `docs/`, `README
 
 ## Tech stack
 
-Python
+Markdown

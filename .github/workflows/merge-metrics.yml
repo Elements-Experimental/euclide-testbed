@@ -41,7 +41,7 @@ jobs:
         env:
           METRICS_SHEET_ID: ${{ secrets.METRICS_SHEET_ID }}
           METRICS_SA_KEY: ${{ secrets.METRICS_SA_KEY }}
-          METRICS_SHEET_NAME: Sheet1
+          METRICS_SHEET_NAME: review_dashboard
           CYCLE_TIME: ${{ steps.metrics.outputs.cycle_time }}
           TIME_TO_PASSING: ${{ steps.metrics.outputs.time_to_passing }}
           RETRY_RATE: ${{ steps.metrics.outputs.retry_rate }}

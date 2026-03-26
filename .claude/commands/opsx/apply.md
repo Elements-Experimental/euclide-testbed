@@ -42,7 +42,7 @@ Implement tasks from an OpenSpec change.
 
    **Handle states:**
    - If `state: "blocked"` (missing artifacts): show message, suggest using `/opsx:continue`
-   - If `state: "all_done"`: congratulate, suggest archive
+   - If `state: "all_done"`: congratulate, proceed to write protocol.md (see step 7)
    - Otherwise: proceed to implementation
 
 4. **Read context files**
@@ -75,12 +75,40 @@ Implement tasks from an OpenSpec change.
    - Error or blocker encountered → report and wait for guidance
    - User interrupts
 
-7. **On completion or pause, show status**
+7. **On all tasks complete: write protocol.md**
+
+   When all tasks are done, write the test protocol at `openspec/changes/<name>/protocol.md`.
+
+   Use the template at `openspec/schemas/elements-impact/templates/protocol.md` and the spec scenarios from `openspec/changes/<name>/specs/*/spec.md` as input.
+
+   For each spec scenario, create a corresponding protocol step with a concrete action and expected result. Mark each step that requires human observation with `<!-- HUMAN CHECKPOINT -->`. Use `- [ ]` checkboxes (do NOT pre-check them).
+
+   Commit:
+   ```bash
+   git add openspec/changes/<name>/protocol.md
+   git commit -m "chore(<name>): add test protocol"
+   ```
+
+8. **Open a draft PR**
+
+   After committing protocol.md:
+   ```bash
+   gh pr create \
+     --head <current-branch> \
+     --base feat/<slug> \
+     --title "feat: <slug>" \
+     --draft \
+     --body "Implementation of change <slug>. See openspec/changes/<slug>/tasks.md for task breakdown."
+   ```
+
+   Report the PR URL.
+
+9. **On completion or pause, show status**
 
    Display:
    - Tasks completed this session
    - Overall progress: "N/M tasks complete"
-   - If all done: suggest archive
+   - If all done: "Protocol written, draft PR opened. The developer will run `/opsx:walk` to verify, then `/opsx:ship` to finalize."
    - If paused: explain why and wait for guidance
 
 **Output During Implementation**
@@ -111,7 +139,10 @@ Working on task 4/7: <task description>
 - [x] Task 2
 ...
 
-All tasks complete! You can archive this change with `/opsx:archive`.
+✓ protocol.md written
+✓ Draft PR opened: <PR-URL>
+
+The developer will run `/opsx:walk <change-name>` to verify, then `/opsx:ship <change-name>` to finalize.
 ```
 
 **Output On Pause (Issue Encountered)**
@@ -143,6 +174,8 @@ What would you like to do?
 - Update task checkbox immediately after completing each task
 - Pause on errors, blockers, or unclear requirements - don't guess
 - Use contextFiles from CLI output, don't assume specific file names
+- **Do not run `/opsx:archive`** — archiving is done by the developer via `/opsx:ship` after human verification
+- Do not pre-check `- [ ]` items in protocol.md — the developer runs the protocol, not the agent
 
 **Fluid Workflow Integration**
 
