@@ -1,14 +1,10 @@
 # euclide-testbed
 
-<!-- Add a short project description here -->
+A demonstration repository featuring a simple Hello World HTML page with night sky-themed styling.
 
 ## Quickstart
 
-<!-- Add run/start instructions here, e.g.:
-```bash
-make install && make dev
-```
--->
+Open `hello-world.html` in a web browser to view the Hello World page with night sky colors.
 
 ## Docs
 
