@@ -12,8 +12,8 @@
 
 ## Conventions
 
-- **Branches:** `feat/<slug>` for implementation; `<agent>/spec-<slug>` for spec authoring (agent platform prefix + `spec-<slug>` suffix); `fix/<issue-number>-<slug>` for standalone fixes
-- **Commits:** `type(#N): description` — omit the number only if no issue exists; types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`
+- **Branches:** `feat/<slug>` is the integration branch managed by the workflow — do not push here directly; `spec-<slug>` for spec authoring (PR into `feat/<slug>`); `implem-<slug>` for implementation (PR into `feat/<slug>`); `fix/<issue-number>-<slug>` for standalone fixes
+- **Commits:** `type(#N): description` — use the **product issue number** from `openspec/changes/<slug>/.meta`; omit the number only if no issue exists; types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`
 - **PR title:** `feat: <slug>` for OpenSpec-driven work; `type(#N): description` for others
 - **Integration branch:** `dev` — all feature branches merge here
 

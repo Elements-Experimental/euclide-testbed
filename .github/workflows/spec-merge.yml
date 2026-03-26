@@ -30,6 +30,18 @@ jobs:
           PR_TITLE="${{ github.event.pull_request.title }}"
           echo "slug=${PR_TITLE#spec: }" >> "$GITHUB_OUTPUT"
 
+      - name: Find spec-agent issue
+        id: spec_issue
+        run: |
+          SLUG="${{ steps.slug.outputs.slug }}"
+          SPEC_ISSUE_NUM=$(gh issue list \
+            --label "spec-agent" \
+            --state open \
+            --search "spec: ${SLUG} in:title" \
+            --json number \
+            --jq '.[0].number // empty')
+          echo "number=${SPEC_ISSUE_NUM}" >> "$GITHUB_OUTPUT"
+
       - name: Read product issue from .meta
         id: meta
         run: |
@@ -50,7 +62,8 @@ jobs:
         id: issue
         run: |
           SLUG="${{ steps.slug.outputs.slug }}"
-          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**This is issue #PLACEHOLDER.** Always include this number in commit messages, e.g. \`feat(#PLACEHOLDER): your message\`."
+          PRODUCT_ISSUE="${{ steps.meta.outputs.product_issue }}"
+          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**Branch:** \`implem-${SLUG}\` — use this name for your working branch. Open a PR from it to \`feat/${SLUG}\` with title \`feat: ${SLUG}\`.\n\n**Commit messages must use the product issue number** (not this issue number): \`feat(#${PRODUCT_ISSUE}): your message\`."
 
           ISSUE_URL=$(gh issue create \
             --title "feat: ${SLUG}" \
@@ -68,7 +81,8 @@ jobs:
         run: |
           ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
           SLUG="${{ steps.slug.outputs.slug }}"
-          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**This is issue #${ISSUE_NUMBER}.** Always include this number in commit messages, e.g. \`feat(#${ISSUE_NUMBER}): your message\`."
+          PRODUCT_ISSUE="${{ steps.meta.outputs.product_issue }}"
+          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**Branch:** \`implem-${SLUG}\` — use this name for your working branch. Open a PR from it to \`feat/${SLUG}\` with title \`feat: ${SLUG}\`.\n\n**Commit messages must use the product issue number** (not this issue number): \`feat(#${PRODUCT_ISSUE}): your message\`."
 
           REPO="${{ github.repository }}"
           jq -n --arg body "$BODY" '{body: $body}' | \
@@ -93,13 +107,18 @@ jobs:
         run: |
           SLUG="${{ steps.slug.outputs.slug }}"
           ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
+          PRODUCT_ISSUE="${{ steps.meta.outputs.product_issue }}"
+          SPEC_ISSUE_NUM="${{ steps.spec_issue.outputs.number }}"
           PROPOSAL="openspec/changes/${SLUG}/proposal.md"
           if [ -f "$PROPOSAL" ]; then
             PR_BODY=$(cat "$PROPOSAL")
           else
             PR_BODY="No proposal.md found for change \`${SLUG}\`."
           fi
-          PR_BODY="${PR_BODY}"$'\n\n---\ncloses #'"${ISSUE_NUMBER}"
+          PR_BODY="${PR_BODY}"$'\n\n---'
+          PR_BODY="${PR_BODY}"$'\ncloses #'"${ISSUE_NUMBER}"
+          [ -n "$PRODUCT_ISSUE" ] && PR_BODY="${PR_BODY}"$'\ncloses #'"${PRODUCT_ISSUE}"
+          [ -n "$SPEC_ISSUE_NUM" ] && PR_BODY="${PR_BODY}"$'\ncloses #'"${SPEC_ISSUE_NUM}"
 
           REPO="${{ github.repository }}"
 
@@ -145,6 +164,23 @@ jobs:
           PR_URL="${{ steps.feat_pr.outputs.url }}"
           gh issue comment "$ISSUE_NUMBER" \
             --body "@${SPEC_AUTHOR} The spec has been merged. Change issue: #${ISSUE_NUMBER}. Draft PR: ${PR_URL}. Assign the issue to an agent to start implementation."
+
+      - name: Comment on product issue
+        run: |
+          PRODUCT_ISSUE="${{ steps.meta.outputs.product_issue }}"
+          ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
+          PR_URL="${{ steps.feat_pr.outputs.url }}"
+          if [ -n "$PRODUCT_ISSUE" ]; then
+            gh issue comment "$PRODUCT_ISSUE" \
+              --body "Implementation task created: #${ISSUE_NUMBER}. Draft PR: ${PR_URL}. Assign #${ISSUE_NUMBER} to an agent to start implementation."
+          fi
+
+      - name: Close spec-agent issue
+        run: |
+          SPEC_ISSUE_NUM="${{ steps.spec_issue.outputs.number }}"
+          if [ -n "$SPEC_ISSUE_NUM" ]; then
+            gh issue close "$SPEC_ISSUE_NUM" --reason completed
+          fi
 
       - name: Verify issue link
         run: |

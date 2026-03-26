@@ -55,8 +55,9 @@ Archive a completed change in the experimental workflow.
    Check for delta specs at `openspec/changes/<name>/specs/`. If none exist, proceed without sync prompt.
 
    **If delta specs exist:**
-   - Compare each delta spec with its corresponding main spec at `openspec/specs/<capability>/spec.md`
-   - Determine what changes would be applied (adds, modifications, removals, renames)
+   - For each capability, check if `openspec/specs/<capability>/spec.md` exists. If it does not (new capability), the entire delta spec becomes the initial main spec — no merge needed, just copy.
+   - If `openspec/specs/` does not exist at all, create it before syncing.
+   - Compare each delta spec with its corresponding main spec (for existing capabilities) to determine changes (adds, modifications, removals, renames)
    - Show a combined summary before prompting
 
    **Prompt options:**

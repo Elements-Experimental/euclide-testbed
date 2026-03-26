@@ -96,12 +96,15 @@ jobs:
             "   - Base the artifacts on the product issue linked above\n" \
             "   - If anything is ambiguous, note it in the Grey Areas section of the PR (do not ask the user)\n" \
             "2. Your PR must be as such:\n" \
-            "   - Title: \`spec: ${SLUG}\` (required — CI uses this to identify spec PRs)\n" \
-            "   - Label: \`spec\`\n" \
-            "   - Body: use \`.github/PULL_REQUEST_TEMPLATE/spec.md\` as the template\n" \
+            "   - **Branch:** \`spec-${SLUG}\` — use this name for your working branch\n" \
+            "   - **Target:** \`${FEAT_BRANCH}\`\n" \
+            "   - **Title:** \`spec: ${SLUG}\` (required — CI uses this to identify spec PRs)\n" \
+            "   - **Label:** \`spec\`\n" \
+            "   - **Body:** use \`.github/PULL_REQUEST_TEMPLATE/spec.md\` as the template\n" \
             "     - Paste the contents of \`openspec/changes/${SLUG}/proposal.md\` into the Proposal section\n" \
             "     - Fill in the Grey Areas section with any ambiguities found\n" \
-            "     - Set the product issue link to #${ISSUE_NUMBER}\n\n" \
+            "     - Set the product issue link to #${ISSUE_NUMBER}\n" \
+            "3. Commit messages must use the product issue number: \`spec(#${ISSUE_NUMBER}): add change artifacts\`\n\n" \
             "### Guardrails\n\n" \
             "- Do not implement any code — spec artifacts only\n" \
             "- Do not close or merge the PR — a human will review it first\n" \
