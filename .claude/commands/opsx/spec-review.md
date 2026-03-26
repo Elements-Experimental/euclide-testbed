@@ -16,7 +16,7 @@ Use this after a spec PR has been opened (and before it is merged) to ensure the
 1. **Select the change**
 
    If a slug is provided, use it. Otherwise:
-   - Infer from current branch: strip `spec/` or `feat/` prefix
+   - Infer from current branch: strip the branch type prefix (everything up to and including the first `/`)
    - If ambiguous, run `openspec list --json` and use **AskUserQuestion** to select
 
    Always announce: "Reviewing specs for change: `<slug>`"

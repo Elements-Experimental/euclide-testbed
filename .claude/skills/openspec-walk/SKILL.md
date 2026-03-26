@@ -16,7 +16,7 @@ Walk the developer through the test protocol for a change, handling issues inlin
 
 1. **Select the change**
 
-   If a slug is provided, use it. Otherwise infer from current branch (strip `feat/`). If ambiguous, use AskUserQuestion.
+   If a slug is provided, use it. Otherwise infer from current branch (strip the branch type prefix — everything up to and including the first `/`). If ambiguous, use AskUserQuestion.
 
    Announce: "Walking protocol for change: `<slug>`"
 

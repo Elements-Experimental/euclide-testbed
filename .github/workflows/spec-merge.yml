@@ -3,12 +3,10 @@ name: Spec Merge
 on:
   pull_request:
     types: [closed]
-    branches:
-      - 'feat/**'
 
 jobs:
   create-change-issue:
-    if: github.event.pull_request.merged == true && startsWith(github.event.pull_request.title, 'spec:')
+    if: "github.event.pull_request.merged == true && startsWith(github.event.pull_request.title, 'spec:')"
     permissions:
       contents: read
       issues: write
@@ -49,9 +47,15 @@ jobs:
           META_FILE="openspec/changes/${SLUG}/.meta"
           if [ -f "$META_FILE" ]; then
             PRODUCT_ISSUE=$(grep '^product_issue=' "$META_FILE" | cut -d= -f2)
+            BRANCH_TYPE=$(grep '^branch_type=' "$META_FILE" | cut -d= -f2)
+            BRANCH=$(grep '^branch=' "$META_FILE" | cut -d= -f2)
             echo "product_issue=${PRODUCT_ISSUE}" >> "$GITHUB_OUTPUT"
+            echo "branch_type=${BRANCH_TYPE:-feat}" >> "$GITHUB_OUTPUT"
+            echo "branch=${BRANCH:-feat/${SLUG}}" >> "$GITHUB_OUTPUT"
           else
             echo "product_issue=" >> "$GITHUB_OUTPUT"
+            echo "branch_type=feat" >> "$GITHUB_OUTPUT"
+            echo "branch=feat/${SLUG}" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Ensure spec-driven label exists
@@ -63,10 +67,11 @@ jobs:
         run: |
           SLUG="${{ steps.slug.outputs.slug }}"
           PRODUCT_ISSUE="${{ steps.meta.outputs.product_issue }}"
-          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**Branch:** \`implem-${SLUG}\` — use this name for your working branch. Open a PR from it to \`feat/${SLUG}\` with title \`feat: ${SLUG}\`.\n\n**Commit messages must use the product issue number** (not this issue number): \`feat(#${PRODUCT_ISSUE}): your message\`."
+          BRANCH_TYPE="${{ steps.meta.outputs.branch_type }}"
+          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**Branch:** \`implem-${SLUG}\` — use this name for your working branch. \`<agent-name>/implem-${SLUG}\` is also acceptable.\n\nOpen a PR titled \`implem: ${SLUG}\`.\n\n**Commit messages must use the product issue number** (not this issue number): \`${BRANCH_TYPE}(#${PRODUCT_ISSUE}): your message\`."
 
           ISSUE_URL=$(gh issue create \
-            --title "feat: ${SLUG}" \
+            --title "implem: ${SLUG}" \
             --body "$BODY" \
             --label "spec-driven")
           ISSUE_NUMBER=$(echo "$ISSUE_URL" | grep -o '[0-9]*$')
@@ -82,7 +87,8 @@ jobs:
           ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
           SLUG="${{ steps.slug.outputs.slug }}"
           PRODUCT_ISSUE="${{ steps.meta.outputs.product_issue }}"
-          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**Branch:** \`implem-${SLUG}\` — use this name for your working branch. Open a PR from it to \`feat/${SLUG}\` with title \`feat: ${SLUG}\`.\n\n**Commit messages must use the product issue number** (not this issue number): \`feat(#${PRODUCT_ISSUE}): your message\`."
+          BRANCH_TYPE="${{ steps.meta.outputs.branch_type }}"
+          printf -v BODY '%b' "Context for this task is at \`openspec/changes/${SLUG}/\`.\n\nEverything you need to implement is in \`openspec/changes/${SLUG}/tasks.md\`.\nYour job is not done until every task is implemented and checked off.\n\nFollow the development process in \`AGENTS.md\`.\n\n**Do not run \`/opsx:archive\`** — archiving is done by the developer via \`/opsx:ship\` after human verification.\n\n**Branch:** \`implem-${SLUG}\` — use this name for your working branch. \`<agent-name>/implem-${SLUG}\` is also acceptable.\n\nOpen a PR titled \`implem: ${SLUG}\`.\n\n**Commit messages must use the product issue number** (not this issue number): \`${BRANCH_TYPE}(#${PRODUCT_ISSUE}): your message\`."
 
           REPO="${{ github.repository }}"
           jq -n --arg body "$BODY" '{body: $body}' | \
@@ -157,13 +163,6 @@ jobs:
           printf '%s' "${PR_BODY}" > "$BODY_FILE"
           gh pr edit "$PR_URL" --body-file "$BODY_FILE"
           rm -f "$BODY_FILE"
-
-      - name: Notify author
-        run: |
-          ISSUE_NUMBER="${{ steps.issue.outputs.number }}"
-          PR_URL="${{ steps.feat_pr.outputs.url }}"
-          gh issue comment "$ISSUE_NUMBER" \
-            --body "@${SPEC_AUTHOR} The spec has been merged. Change issue: #${ISSUE_NUMBER}. Draft PR: ${PR_URL}. Assign the issue to an agent to start implementation."
 
       - name: Comment on product issue
         run: |

@@ -14,7 +14,7 @@ Walk the developer through the test protocol for a change, one step at a time. A
 1. **Select the change**
 
    If a slug is provided, use it. Otherwise:
-   - Infer from current branch: strip `feat/` prefix
+   - Infer from current branch: strip the branch type prefix (everything up to and including the first `/`)
    - If ambiguous, run `openspec list --json` and use **AskUserQuestion** to select
 
    Always announce: "Walking protocol for change: `<slug>`"

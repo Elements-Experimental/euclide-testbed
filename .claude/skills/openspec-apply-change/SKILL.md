@@ -87,8 +87,11 @@ Implement tasks from an OpenSpec change.
 
 8. **Open a draft PR**
 
+   Read integration branch from `.meta` first:
    ```bash
-   gh pr create --head <branch> --base feat/<slug> --title "feat: <slug>" --draft --body "Implementation of <slug>."
+   BRANCH=$(grep '^branch=' openspec/changes/<slug>/.meta | cut -d= -f2)
+   BRANCH=${BRANCH:-feat/<slug>}   # fallback for repos without branch in .meta
+   gh pr create --head <current-branch> --base "${BRANCH}" --title "implem: <slug>" --draft --body "Implementation of <slug>."
    ```
 
 9. **On completion or pause, show status**

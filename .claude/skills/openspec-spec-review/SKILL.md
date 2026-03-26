@@ -16,7 +16,7 @@ Review the spec artifacts for a change, identify ambiguities, and interactively 
 
 1. **Select the change**
 
-   If a slug is provided, use it. Otherwise infer from current branch (strip `spec/` or `feat/` prefix). If ambiguous, run `openspec list --json` and use AskUserQuestion.
+   If a slug is provided, use it. Otherwise infer from current branch (strip the branch type prefix — everything up to and including the first `/`). If ambiguous, run `openspec list --json` and use AskUserQuestion.
 
    Always announce: "Reviewing specs for change: `<slug>`"
 

@@ -6,7 +6,7 @@ on:
 
 jobs:
   create-spec-task:
-    if: github.event.label.name == 'ready to dev'
+    if: "startsWith(github.event.label.name, 'ready: ')"
     permissions:
       contents: write
       issues: write
@@ -15,14 +15,18 @@ jobs:
       GH_TOKEN: ${{ github.token }}
       ISSUE_NUMBER: ${{ github.event.issue.number }}
       ISSUE_TITLE: ${{ github.event.issue.title }}
+      LABEL_NAME: ${{ github.event.label.name }}
     steps:
       - uses: actions/checkout@v4
         with:
           ref: "dev"
 
-      - name: Derive slug from issue
+      - name: Derive slug and branch type from issue
         id: slug
         run: |
+          # Extract branch type from label (e.g. "ready: feat" → "feat")
+          BRANCH_TYPE=$(echo "$LABEL_NAME" | sed 's/^ready: //')
+
           # Slugify: prepend issue number, lowercase, replace non-alphanumeric with hyphens,
           # collapse consecutive hyphens, trim leading/trailing, truncate title portion at 50 chars
           TITLE_SLUG=$(echo "$ISSUE_TITLE" \
@@ -33,36 +37,45 @@ jobs:
             | cut -c1-50)
 
           SLUG="${ISSUE_NUMBER}-${TITLE_SLUG}"
+          INTEGRATION_BRANCH="${BRANCH_TYPE}/${SLUG}"
           echo "slug=$SLUG" >> "$GITHUB_OUTPUT"
-          echo "feat_branch=feat/${SLUG}" >> "$GITHUB_OUTPUT"
+          echo "branch_type=$BRANCH_TYPE" >> "$GITHUB_OUTPUT"
+          echo "integration_branch=$INTEGRATION_BRANCH" >> "$GITHUB_OUTPUT"
 
-      - name: Create feat/ branch with .meta file
+      - name: Create integration branch with .meta file
         id: branch
         run: |
-          FEAT_BRANCH="${{ steps.slug.outputs.feat_branch }}"
+          INTEGRATION_BRANCH="${{ steps.slug.outputs.integration_branch }}"
           SLUG="${{ steps.slug.outputs.slug }}"
+          BRANCH_TYPE="${{ steps.slug.outputs.branch_type }}"
 
-          if git ls-remote --exit-code --heads origin "$FEAT_BRANCH" > /dev/null 2>&1; then
-            echo "Branch $FEAT_BRANCH already exists — skipping creation"
+          if git ls-remote --exit-code --heads origin "$INTEGRATION_BRANCH" > /dev/null 2>&1; then
+            echo "Branch $INTEGRATION_BRANCH already exists — skipping creation"
             echo "created=false" >> "$GITHUB_OUTPUT"
           else
-            git checkout -b "$FEAT_BRANCH"
+            git checkout -b "$INTEGRATION_BRANCH"
 
-            # Write .meta so downstream workflows can find the product issue number
+            # Write .meta so downstream workflows can find the product issue number and branch info
             mkdir -p "openspec/changes/${SLUG}"
-            printf 'product_issue=%s\n' "$ISSUE_NUMBER" > "openspec/changes/${SLUG}/.meta"
+            printf 'product_issue=%s\nbranch_type=%s\nbranch=%s\n' \
+              "$ISSUE_NUMBER" "$BRANCH_TYPE" "$INTEGRATION_BRANCH" \
+              > "openspec/changes/${SLUG}/.meta"
 
             git config user.name "github-actions[bot]"
             git config user.email "github-actions[bot]@users.noreply.github.com"
             git add "openspec/changes/${SLUG}/.meta"
             git commit -m "chore: initialise change directory for #${ISSUE_NUMBER}"
-            git push -u origin "$FEAT_BRANCH"
+            git push -u origin "$INTEGRATION_BRANCH"
             echo "created=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Ensure labels exist
         run: |
           gh label create "spec-agent" --color "e4e669" --description "Spec creation task for an AI agent" || true
+          gh label create "ready: feat" --color "0e8a16" --description "Ready for development — new feature" || true
+          gh label create "ready: fix" --color "d73a4a" --description "Ready for development — bug fix" || true
+          gh label create "ready: chore" --color "e4e669" --description "Ready for development — maintenance" || true
+          gh label create "ready: docs" --color "0075ca" --description "Ready for development — documentation" || true
 
       - name: Check for existing spec-agent issue
         id: existing_spec
@@ -81,13 +94,13 @@ jobs:
         if: steps.existing_spec.outputs.issue_number == ''
         run: |
           SLUG="${{ steps.slug.outputs.slug }}"
-          FEAT_BRANCH="${{ steps.slug.outputs.feat_branch }}"
+          INTEGRATION_BRANCH="${{ steps.slug.outputs.integration_branch }}"
           REPO="${{ github.repository }}"
 
           BODY=$(printf '%b' \
             "## Spec creation task\n\n" \
             "**Change slug:** \`${SLUG}\`\n" \
-            "**Feature branch:** \`${FEAT_BRANCH}\`\n" \
+            "**Integration branch:** \`${INTEGRATION_BRANCH}\`\n" \
             "**Product issue:** #${ISSUE_NUMBER}\n\n" \
             "### Instructions\n\n" \
             "Your job is to create the OpenSpec artifacts for this change.\n\n" \
@@ -96,8 +109,7 @@ jobs:
             "   - Base the artifacts on the product issue linked above\n" \
             "   - If anything is ambiguous, note it in the Grey Areas section of the PR (do not ask the user)\n" \
             "2. Your PR must be as such:\n" \
-            "   - **Branch:** \`spec-${SLUG}\` — use this name for your working branch\n" \
-            "   - **Target:** \`${FEAT_BRANCH}\`\n" \
+            "   - **Branch:** \`spec-${SLUG}\` — use this name for your working branch. \`<agent-name>/spec-${SLUG}\` is also acceptable.\n" \
             "   - **Title:** \`spec: ${SLUG}\` (required — CI uses this to identify spec PRs)\n" \
             "   - **Label:** \`spec\`\n" \
             "   - **Body:** use \`.github/PULL_REQUEST_TEMPLATE/spec.md\` as the template\n" \
@@ -134,17 +146,17 @@ jobs:
 
       - name: Comment on product issue
         run: |
-          FEAT_BRANCH="${{ steps.slug.outputs.feat_branch }}"
+          INTEGRATION_BRANCH="${{ steps.slug.outputs.integration_branch }}"
           EXISTING="${{ steps.existing_spec.outputs.issue_number }}"
           SPEC_ISSUE_NUMBER="${{ steps.spec_issue.outputs.number }}"
 
           if [ -n "$EXISTING" ]; then
             printf -v COMMENT '%b' \
-              "Spec task already exists: #${EXISTING}. Feature branch: \`${FEAT_BRANCH}\`.\n\n" \
+              "Spec task already exists: #${EXISTING}. Integration branch: \`${INTEGRATION_BRANCH}\`.\n\n" \
               "Assign #${EXISTING} to a coding agent to generate spec artifacts and open a spec PR."
           else
             printf -v COMMENT '%b' \
-              "Spec task created: #${SPEC_ISSUE_NUMBER}. Feature branch \`${FEAT_BRANCH}\` is ready.\n\n" \
+              "Spec task created: #${SPEC_ISSUE_NUMBER}. Integration branch \`${INTEGRATION_BRANCH}\` is ready.\n\n" \
               "**Next steps:** assign #${SPEC_ISSUE_NUMBER} to a coding agent (GitHub Copilot, Claude, etc.) to generate spec artifacts and open a spec PR."
           fi
 

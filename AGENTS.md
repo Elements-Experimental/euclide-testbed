@@ -12,9 +12,9 @@
 
 ## Conventions
 
-- **Branches:** `feat/<slug>` is the integration branch managed by the workflow — do not push here directly; `spec-<slug>` for spec authoring (PR into `feat/<slug>`); `implem-<slug>` for implementation (PR into `feat/<slug>`); `fix/<issue-number>-<slug>` for standalone fixes
-- **Commits:** `type(#N): description` — use the **product issue number** from `openspec/changes/<slug>/.meta`; omit the number only if no issue exists; types: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`
-- **PR title:** `feat: <slug>` for OpenSpec-driven work; `type(#N): description` for others
+- **Branches:** The integration branch `<type>/<slug>` is created by the workflow when an issue is labeled `ready: feat`, `ready: fix`, `ready: chore`, or `ready: docs` — do not push here directly. Use `spec-<slug>` (or `<agent>/spec-<slug>`) for spec authoring; `implem-<slug>` (or `<agent>/implem-<slug>`) for implementation. Both PR into the integration branch.
+- **Commits:** `type(#N): description` — use the **product issue number** from `openspec/changes/<slug>/.meta`; the `type` matches the integration branch prefix (`feat`, `fix`, `chore`, `docs`); omit the number only if no issue exists
+- **PR titles:** `spec: <slug>` for spec PRs; `implem: <slug>` for implementation PRs; integration PR title is `<type>: <slug>`
 - **Integration branch:** `dev` — all feature branches merge here
 
 ## Development process
