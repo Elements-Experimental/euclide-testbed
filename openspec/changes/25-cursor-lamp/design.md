@@ -27,7 +27,10 @@ Use a JavaScript mousemove event listener to track cursor position and update a 
 - Add a `<div>` overlay element with pointer-events: none to avoid interfering with interactions
 - Use CSS `radial-gradient` with a transparent center fading to the dark background color
 - Update gradient position via CSS custom properties (--mouse-x, --mouse-y) for better performance than direct style manipulation
-- Typical lamp radius: 200-300px with smooth falloff
+- Lamp radius: 250px with smooth falloff
+- Light center color: cool blue-white `rgba(200, 220, 255, 0.15)` fading to transparent, overlaid on the dark background
+- Initial state: overlay is fully opaque (dark) on load; lamp only appears on first `mousemove`
+- Cursor exit: listen for `mouseleave` on the document and hide the lamp (restore full dark overlay)
 
 ### ADR Links
 <!-- No architectural decisions required for this simple enhancement -->

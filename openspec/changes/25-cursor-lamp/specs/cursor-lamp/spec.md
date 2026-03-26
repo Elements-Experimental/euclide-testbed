@@ -26,11 +26,17 @@ The lamp effect must not interfere with any existing content or user interaction
 - **THEN** the lamp's center should be brighter than the surrounding area
 - **AND** the light should fade smoothly into the existing dark blue/purple background colors
 
+#### Scenario: Page loads in dark state
+- **GIVEN** a user opens the hello world page
+- **WHEN** the page finishes loading and the cursor has not yet entered the viewport
+- **THEN** the page should display a fully dark overlay (no lamp visible)
+- **AND** the night sky background and text content should remain readable beneath the overlay
+
 #### Scenario: Page loads with lamp functionality
 - **GIVEN** a user opens the hello world page
 - **WHEN** the page finishes loading
 - **THEN** the cursor lamp effect should be ready and functional
-- **AND** the lamp should appear as soon as the user moves their cursor
+- **AND** the lamp should appear as soon as the user moves their cursor for the first time
 
 #### Scenario: Lamp does not block content
 - **GIVEN** the hello world page is displayed with the cursor lamp effect
@@ -40,8 +46,10 @@ The lamp effect must not interfere with any existing content or user interaction
 
 #### Scenario: Cursor leaves and re-enters page
 - **GIVEN** the cursor lamp is active on the page
-- **WHEN** the user moves their cursor outside the page boundary and then back in
-- **THEN** the lamp effect should reappear at the cursor's new position
+- **WHEN** the user moves their cursor outside the page boundary
+- **THEN** the lamp should disappear immediately (overlay returns to fully dark)
+- **WHEN** the user moves their cursor back into the page
+- **THEN** the lamp effect should reappear at the cursor's new entry position
 - **AND** the effect should continue to track cursor movement smoothly
 
 ## Out of scope
