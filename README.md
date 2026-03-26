@@ -1,14 +1,13 @@
 # euclide-testbed
 
-<!-- Add a short project description here -->
+A simple testbed project for demonstrating OpenSpec workflow and basic HTML development.
 
 ## Quickstart
 
-<!-- Add run/start instructions here, e.g.:
-```bash
-make install && make dev
-```
--->
+To view the Hello World page:
+
+1. Open `src/index.html` in your web browser
+2. The page will display "Hello World"
 
 ## Docs
 
