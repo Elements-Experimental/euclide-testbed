@@ -31,7 +31,7 @@ The "about" field will contain a brief description of the project: that it's a t
 
 ### Layout Structure
 - Convert the body to a flex container with horizontal layout
-- Sidebar on the left with fixed width (e.g., 250-300px)
+- Sidebar on the left with fixed width of 250px
 - Main content area on the right taking remaining space
 - Maintain the cursor lamp overlay across the entire viewport
 
