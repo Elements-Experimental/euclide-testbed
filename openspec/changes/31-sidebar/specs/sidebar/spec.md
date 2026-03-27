@@ -6,8 +6,11 @@ The page must include a sidebar element positioned on the left side of the page 
 ### Requirement: About field content
 The sidebar must contain an "about" field with text that explains the purpose of this project (that it's a testbed for demonstrating web development concepts and the OpenSpec workflow).
 
+### Requirement: Sidebar width
+The sidebar must have a fixed width of 250px.
+
 ### Requirement: Visual integration with existing design
-The sidebar must use styling that complements the existing night sky theme (dark blues and purples) and integrates visually with the current page design.
+The sidebar must use a dark, semi-transparent background in the dark blue/purple family (opacity ≤ 0.8) consistent with the existing gradient, integrating visually with the current page design.
 
 ### Requirement: Layout adjustment
 The page layout must be adjusted to accommodate the sidebar while keeping the main "Hello World" content visible and properly positioned.
@@ -26,8 +29,8 @@ The existing cursor lamp effect must continue to work across the entire page, in
 #### Scenario: Sidebar displays with night sky styling
 - **GIVEN** the page is loaded with the sidebar
 - **WHEN** the page renders
-- **THEN** the sidebar should have styling that matches the night sky theme
-- **AND** the sidebar colors should complement the existing background gradient
+- **THEN** the sidebar element must have a fixed width of 250px
+- **AND** the sidebar background must use a dark, semi-transparent color in the dark blue/purple family (e.g., `rgba(10, 10, 40, 0.7)` or equivalent) with opacity ≤ 0.8
 
 #### Scenario: Main content remains visible alongside sidebar
 - **GIVEN** the sidebar is present
@@ -52,7 +55,7 @@ The existing cursor lamp effect must continue to work across the entire page, in
 
 - Collapsible or toggleable sidebar functionality
 - Multiple sections in the sidebar beyond "about"
-- Responsive design for mobile or tablet devices
+- Responsive design for mobile or tablet devices — the sidebar layout is designed for viewports ≥ 1024px wide; narrower viewports are not supported
 - Sidebar navigation or interactive elements (links, buttons)
 - Separate sidebar component files
 - External CSS frameworks or libraries
