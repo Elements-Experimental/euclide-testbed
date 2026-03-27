@@ -1,5 +1,5 @@
 # Changes here will be overwritten by Copier
-_commit: v4.0.0-beta
+_commit: v4.0.1-beta
 _src_path: https://github.com/Elements-Experimental/euclide
 default_branch: dev
 metrics_enabled: true
