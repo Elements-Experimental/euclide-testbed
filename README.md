@@ -1,10 +1,13 @@
 # euclide-testbed
 
-A demonstration repository featuring a simple Hello World HTML page with night sky-themed styling.
+A demonstration repository featuring a simple Hello World HTML page with night sky-themed styling and an informational sidebar.
 
 ## Quickstart
 
-Open `hello-world.html` in a web browser to view the Hello World page with night sky colors.
+Open `hello-world.html` in a web browser to view the Hello World page with:
+- A sidebar on the left containing project information
+- Night sky gradient background
+- Interactive cursor lamp effect that illuminates areas under your mouse
 
 ## Docs
 
