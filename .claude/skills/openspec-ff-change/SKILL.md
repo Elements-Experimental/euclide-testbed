@@ -70,7 +70,18 @@ Fast-forward through artifact creation - generate everything needed to start imp
       - Use **AskUserQuestion tool** to clarify
       - Then continue with creation
 
-5. **Show final status**
+5. **Self-check before showing output**
+
+   Before presenting the final summary, verify the artifact set is ready for implementation:
+
+   - **Requirement coverage**: Does every spec requirement have at least one task? Work backwards from requirements to tasks.
+   - **Task specificity**: Does every task have Files, Action, Verify, and Done sub-fields? Are the file paths real (from research.md), not invented?
+   - **Design alignment**: Do tasks match the decisions in design.md? If design chose approach X, tasks should implement X.
+   - **Research grounding**: Does research.md cite actual file paths, not assumptions? Are all "Unclear" items resolved in design.md?
+
+   If any check fails, fix the affected artifact before proceeding.
+
+6. **Show final status**
    ```bash
    openspec status --change "<name>"
    ```
@@ -92,6 +103,11 @@ After completing all artifacts, summarize:
 - **IMPORTANT**: `context` and `rules` are constraints for YOU, not content for the file
   - Do NOT copy `<context>`, `<rules>`, `<project_context>` blocks into the artifact
   - These guide what you write, but should never appear in the output
+- **tasks.md**: Every task needs Files, Action, Verify, Done sub-fields. File paths come from research.md. If a path isn't in research.md, go find it.
+
+**When creating the `research` artifact**: use the `openspec-research` skill methodology. This skill provides a structured codebase investigation procedure — read it before producing research.md.
+
+@../openspec-research/SKILL.md
 
 **Guardrails**
 - Create ALL artifacts needed for implementation (as defined by schema's `apply.requires`)

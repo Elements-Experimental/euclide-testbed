@@ -97,14 +97,19 @@ The artifact types and their purpose depend on the schema. Use the `instruction`
 
 Common artifact patterns:
 
-**spec-driven schema** (proposal → specs → design → tasks):
+**elements-impact schema** (proposal → specs → research → design → tasks):
 - **proposal.md**: Ask user about the change if not clear. Fill in Why, What Changes, Capabilities, Impact.
   - The Capabilities section is critical - each capability listed will need a spec file.
 - **specs/<capability>/spec.md**: Create one spec per capability listed in the proposal's Capabilities section (use the capability name, not the change name).
-- **design.md**: Document technical decisions, architecture, and implementation approach.
-- **tasks.md**: Break down implementation into checkboxed tasks.
+- **research.md**: Use the `openspec-research` skill for structured codebase investigation — see below.
+- **design.md**: Document technical decisions, architecture, and implementation approach. Reference research.md for codebase evidence.
+- **tasks.md**: Break down implementation into checkboxed tasks. Each task MUST have Files, Action, Verify, and Done sub-fields. File paths come from research.md.
 
 For other schemas, follow the `instruction` field from the CLI output.
+
+**When creating the `research` artifact**, use the `openspec-research` skill methodology:
+
+@../openspec-research/SKILL.md
 
 **Guardrails**
 - Create ONE artifact per invocation

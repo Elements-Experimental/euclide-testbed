@@ -34,7 +34,8 @@
 After all tasks are complete, write the test protocol at `openspec/changes/<slug>/protocol.md` using the template at `openspec/schemas/elements-impact/templates/protocol.md`.
 
 - Group steps by feature area
-- Mark each step that requires human judgment with `<!-- HUMAN CHECKPOINT -->`
+- **Automation-first**: only use `<!-- HUMAN CHECKPOINT -->` for steps requiring human judgment (visual rendering, interactive UX, auth flows, external services). Automated checks (tests, lint, type checking) are run by `/opsx:walk` automatically before the walkthrough — do not include them as manual steps.
+- Each step should include a `- **Built**: <one sentence>` line before the action, so the developer has context for why they're checking it
 - Each step MUST have a concrete action and an **Expected** result
 - Link steps to spec scenarios where applicable: `_(AC: specs/<capability>/spec.md § Scenario: X)_`
 - Use `- [ ]` checkboxes — **do not pre-check them**; the developer runs the protocol, not the agent
@@ -46,6 +47,27 @@ After all tasks are complete, write the test protocol at `openspec/changes/<slug
 ## Documentation and tests are part of the task
 
 Any change must be accompanied by updated documentation (specs, `docs/`, `README.md`, `AGENTS.md`, or whatever is relevant) in the same commit or PR — not as a follow-up. Tests must be written for every change, covering all acceptance criteria and edge cases. If a case genuinely cannot be automated, state it explicitly in the PR's "Test protocol" section with a reason.
+
+## When things go wrong
+
+Debugging is a scientific process. Apply it consistently:
+
+1. **Observe** — read the actual error message and stack trace in full. Do not paraphrase it.
+2. **Hypothesize** — form one specific, falsifiable hypothesis about the cause. "I think X because Y."
+3. **Test one thing** — make the smallest possible change that would confirm or refute the hypothesis. Do not change multiple things at once.
+4. **Conclude** — did the change help? If yes, root cause found. If no, discard hypothesis and return to step 2 with new evidence.
+
+**Stop after 3 failed attempts.** If three distinct hypotheses have all been tested and disproved, you are missing context. Open a draft PR with a clear description of: what you observed, the three hypotheses you tested, what you found, and what information you need. Do not keep trying random fixes.
+
+**Do not restart** — do not wipe state, re-clone, or start over as a debugging strategy. Restarts hide evidence.
+
+## Working philosophy
+
+- **Treat knowledge as hypothesis.** Training data is stale. What you "know" about a library or pattern may be outdated. Verify against the actual codebase before asserting.
+- **Cite evidence.** When describing how something works, reference the file path. "Based on `src/auth/session.ts:42`" is useful. "I believe the auth system uses JWT" is not.
+- **Be prescriptive.** Say "use X" not "consider X or Y." When evidence supports a clear choice, make it. Reserve "could go either way" for genuinely ambiguous cases.
+- **Surface uncertainty explicitly.** "I'm not sure where the config is loaded — I found `config/defaults.ts` but couldn't confirm it's the active path" is more useful than a confident wrong answer.
+- **Read before concluding.** Do not describe file contents you haven't read. Do not assert a pattern exists without finding it.
 
 ## Guardrails
 

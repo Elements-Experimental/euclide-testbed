@@ -168,6 +168,31 @@ What would you like to do?
 - **Do not run archive** — archiving is done by the developer via openspec-ship after human verification
 - Do not pre-check `- [ ]` items in protocol.md
 
+**Deviation Rules**
+
+While implementing, you will discover work not in the tasks. Apply these rules automatically. Note all deviations in the PR body.
+
+| Rule | Trigger | Action |
+|------|---------|--------|
+| **Auto-fix bugs** | Code doesn't work as intended (broken logic, wrong output, type errors) | Fix inline, verify, continue |
+| **Auto-fix blockers** | Something prevents completing the current task (broken imports, missing file, wrong types) | Fix inline, verify, continue |
+| **Auto-add missing critical functionality** | Missing correctness or security behavior required for your current task's changes to work or meet the spec/acceptance criteria (e.g., a null check to prevent a crash in the new code path) | Add only the minimal required behavior for the current task, verify, continue; otherwise stop and ask or just note as out-of-scope per the scope boundary |
+| **Stop — ask about architectural changes** | Fix requires significant structural change (new DB table, new service layer, switching libraries, breaking API) | STOP. Describe what you found, the proposed change, why it's needed, and the impact. Wait for developer decision. |
+
+**Scope boundary**: Only fix issues directly caused by your current task's changes. Pre-existing bugs or unrelated failures are out of scope — note them in the PR but do not fix them.
+
+**Fix attempt limit**: After 3 auto-fix attempts on a single task without resolution, stop fixing, document remaining issues clearly, and continue to the next task.
+
+**Anti-Stall Guard**
+
+If you make 5 or more consecutive read/search actions (Read, Grep, Glob, Bash for inspection) without writing any code:
+
+STOP. State in one sentence why you haven't written anything yet. Then either:
+1. Write code (you have enough context), or
+2. Report "blocked" with the specific missing information needed.
+
+Do NOT keep reading. Analysis without action is a stuck signal.
+
 **Fluid Workflow Integration**
 
 This skill supports the "actions on a change" model:

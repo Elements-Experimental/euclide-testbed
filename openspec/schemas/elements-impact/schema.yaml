@@ -141,6 +141,20 @@ artifacts:
       Specs should be testable - each scenario is a potential test case.
     requires:
       - proposal
+  - id: research
+    generates: research.md
+    description: Codebase investigation — existing patterns, integration points, reusable assets, and risks with confidence levels
+    template: research.md
+    instruction: >
+      Investigate the codebase and produce research.md before design work begins.
+      Follow the openspec-research skill methodology: read proposal and specs to
+      understand scope, then systematically investigate for existing patterns,
+      integration points, reusable assets, and risks. Classify every finding as
+      Confident / Likely / Unclear and cite a file path as evidence. For greenfield
+      or new-technology changes, also investigate ecosystem patterns via WebSearch
+      and WebFetch, citing URLs. Output is consumed by design.md.
+    requires:
+      - specs
   - id: design
     generates: design.md
     description: Technical design document with implementation details
@@ -180,12 +194,15 @@ artifacts:
 
       Focus on architecture and approach, not line-by-line implementation.
 
-      Reference the proposal for motivation and specs for requirements.
+      Reference the proposal for motivation, specs for requirements, and
+      research.md for codebase evidence.
 
 
       Good design docs explain the "why" behind technical decisions.
     requires:
       - proposal
+      - research
+      - specs
   - id: tasks
     generates: tasks.md
     description: Implementation checklist with trackable tasks
@@ -200,6 +217,25 @@ artifacts:
       tracked.
 
 
+      Each task MUST include four sub-fields on indented lines below the
+      checkbox:
+
+      - **Files**: Exact file paths to create or modify (from research.md for
+      existing files; for new files, specify the intended path following project
+      conventions — do not invent arbitrary paths)
+
+      - **Action**: What to do — specific enough that another agent can
+      execute it without re-reading everything
+
+      - **Verify**: How to confirm this task is done (command, visual check,
+      or test assertion)
+
+      - **Done**: The observable acceptance criterion — what "done" looks like
+
+
+      **Specificity test:** If Files is empty or Action says only "implement X", the task is too vague. Rewrite until you could hand it to a fresh agent with no other context and they'd know exactly what to do.
+
+
       Guidelines:
 
       - Group related tasks under ## numbered headings
@@ -210,8 +246,10 @@ artifacts:
 
       - Order tasks by dependency (what must be done first?)
 
-      - Tasks come first; GitHub Issues are derived from tasks, not the other way around.
-      Do not suggest creating issues before tasks exist.
+      - Reference research.md for file paths and integration points
+
+      - Tasks come first; GitHub Issues are derived from tasks, not the other
+      way around. Do not suggest creating issues before tasks exist.
 
 
       Example:
@@ -221,27 +259,25 @@ artifacts:
       ## 1. Setup
 
 
-      - [ ] 1.1 Create new module structure _(AC: spec.md § Requirements)_
-
-      - [ ] 1.2 Add dependencies to package.json _(AC: spec.md § Setup)_
-
-
-      ## 2. Core Implementation
-
-
-      - [ ] 2.1 Implement data export function _(AC: spec.md § Data Export)_
-
-      - [ ] 2.2 Add CSV formatting utilities _(AC: spec.md § Data Export)_
+      - [ ] 1.1 Create data export module _(AC: specs/data-export/spec.md § Export Requirements)_
+        - **Files**: `src/lib/export.ts` (new), `src/lib/index.ts` (add export)
+        - **Action**: Create `exportToCSV(rows: Row[]): string` function using
+          existing `Row` type from `src/types/data.ts`. Add named export in index.
+        - **Verify**: `tsc --noEmit` passes; unit test in `src/lib/export.test.ts` passes
+        - **Done**: `exportToCSV` callable from any module; returns valid CSV string
 
       ```
 
 
-      Reference specs for what needs to be built, design for how to build it.
+      Reference specs for what needs to be built, research.md for file paths
 
-      Each task should be verifiable - you know when it's done.
+      and patterns, design for architectural decisions.
+
+      Each task should be verifiable — you know exactly when it's done.
     requires:
       - specs
       - design
+      - research
   - id: protocol
     generates: protocol.md
     description: Step-by-step test protocol with human checkpoints for developer verification
@@ -250,26 +286,42 @@ artifacts:
       Write a test protocol that walks a developer through verifying the implementation manually.
 
 
+      **Automation-first principle**: Reserve `<!-- HUMAN CHECKPOINT -->` steps
+      for things that genuinely require human judgment — visual rendering,
+      interactive UX, auth flows, external services. Automated checks (tests,
+      lint, type checking) are run by the walk command before the human
+      walkthrough begins; do not include them as manual steps.
+
+
       Guidelines:
 
       - Group steps by feature area under ## numbered headings
 
-      - Use `<!-- HUMAN CHECKPOINT -->` on any step that requires human judgment or observation
+      - Use `<!-- HUMAN CHECKPOINT -->` only for steps requiring human
+      judgment or observation — not for things the agent can verify
+      automatically
 
-      - Steps should be concrete actions (e.g. "Navigate to screen X", "Click button Y")
+      - Each step should include a `- **Built**: <!-- one sentence: what
+      the agent implemented for this step -->` line before the action, so
+      the developer has context for why they're checking it
 
-      - Each step MUST include an **Expected** line describing what should happen
+      - Steps should be concrete actions (e.g. "Navigate to screen X",
+      "Click button Y")
 
-      - Reference the relevant spec scenarios (e.g. `_(AC: specs/feature/spec.md § Scenario: X)_`) where applicable
+      - Each step MUST include an **Expected** line describing what should
+      happen
+
+      - Reference the relevant spec scenarios (e.g. `_(AC:
+      specs/feature/spec.md § Scenario: X)_`) where applicable
 
       - Order steps from setup through core flows to edge cases
 
       - Use `- [ ]` checkboxes so the walk command can track progress
 
 
-      This protocol is used by the developer with `/opsx:walk` after implementation.
-
-      Agents should NOT mark steps as done — that is for the human developer.
+      This protocol is used by the developer with `/opsx:walk` after
+      implementation. Agents should NOT mark steps as done — that is for
+      the human developer.
     requires:
       - tasks
 apply:

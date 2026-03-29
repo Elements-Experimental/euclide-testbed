@@ -43,9 +43,10 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
 
 4. **Initialize verification report structure**
 
-   Create a report structure with three dimensions:
+   Create a report structure with four dimensions:
    - **Completeness**: Track tasks and spec coverage
    - **Correctness**: Track requirement implementation and scenario coverage
+   - **Substance**: Track hollow implementations, stubs, and placeholder code
    - **Coherence**: Track design adherence and pattern consistency
 
    Each dimension can have CRITICAL, WARNING, or SUGGESTION issues.
@@ -89,7 +90,24 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
        - Add WARNING: "Scenario not covered: <scenario name>"
        - Recommendation: "Add test or implementation for scenario: <description>"
 
-7. **Verify Coherence**
+7. **Verify Implementation Substance**
+
+   Scan new and modified files for hollow implementations:
+
+   - **Stub indicators**:
+     - `TODO` or `FIXME` comments in logic paths
+     - `throw new Error("not implemented")` or equivalent
+     - Empty function bodies `{}`
+     - Placeholder return values: `return null`, `return []`, `return ""`
+     - Hardcoded fake data where dynamic data is expected
+   - **Placeholder UI**: static text where dynamic data should appear, commented-out rendering logic
+   - **Disconnected state**: state variables that are set but never rendered, or rendered but never updated
+
+   For each stub found:
+   - Add CRITICAL issue: "Stub code found: `<file>:<line>` — `<stub description>`"
+   - Recommendation: "Replace stub with real implementation per task X"
+
+8. **Verify Coherence**
 
    **Design Adherence**:
    - If design.md exists in contextFiles:
@@ -100,6 +118,15 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
        - Recommendation: "Update implementation or revise design.md to match reality"
    - If no design.md: Skip design adherence check, note "No design.md to verify against"
 
+   **Integration Verification**:
+   - For each new file created by this change, verify it is wired into the application:
+     - Is it imported somewhere? (`grep -r "import.*<filename>"`)
+     - Is it rendered, called, or registered? (component mounted, function called, route registered)
+   - If a file exists but is not imported or used anywhere:
+     - Add WARNING: "Orphaned file: `<path>` — created but not imported or used"
+     - Recommendation: "Wire `<path>` into `<expected entry point>` or remove if unused"
+   - Check for disconnected data flows: API routes that no client calls, state that no component reads, handlers that no event triggers
+
    **Code Pattern Consistency**:
    - Review new code for consistency with project patterns
    - Check file naming, directory structure, coding style
@@ -107,18 +134,19 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
      - Add SUGGESTION: "Code pattern deviation: <details>"
      - Recommendation: "Consider following project pattern: <example>"
 
-8. **Generate Verification Report**
+9. **Generate Verification Report**
 
    **Summary Scorecard**:
    ```
    ## Verification Report: <change-name>
 
    ### Summary
-   | Dimension    | Status           |
-   |--------------|------------------|
-   | Completeness | X/Y tasks, N reqs|
-   | Correctness  | M/N reqs covered |
-   | Coherence    | Followed/Issues  |
+   | Dimension    | Status                    |
+   |--------------|---------------------------|
+   | Completeness | X/Y tasks, N reqs         |
+   | Correctness  | M/N reqs covered          |
+   | Substance    | No stubs / N stubs found  |
+   | Coherence    | Followed/Issues           |
    ```
 
    **Issues by Priority**:
@@ -147,15 +175,16 @@ Verify that an implementation matches the change artifacts (specs, tasks, design
 
 - **Completeness**: Focus on objective checklist items (checkboxes, requirements list)
 - **Correctness**: Use keyword search, file path analysis, reasonable inference - don't require perfect certainty
+- **Substance**: Flag any stub, TODO, placeholder, or empty body in logic paths; distinguish scaffolding placeholders from real hollow logic
 - **Coherence**: Look for glaring inconsistencies, don't nitpick style
 - **False Positives**: When uncertain, prefer SUGGESTION over WARNING, WARNING over CRITICAL
 - **Actionability**: Every issue must have a specific recommendation with file/line references where applicable
 
 **Graceful Degradation**
 
-- If only tasks.md exists: verify task completion only, skip spec/design checks
-- If tasks + specs exist: verify completeness and correctness, skip design
-- If full artifacts: verify all three dimensions
+- If only tasks.md exists: verify task completion and substance, skip spec/design checks
+- If tasks + specs exist: verify completeness, correctness, and substance; skip design
+- If full artifacts: verify all dimensions (completeness, correctness, substance, coherence)
 - Always note which checks were skipped and why
 
 **Output Format**

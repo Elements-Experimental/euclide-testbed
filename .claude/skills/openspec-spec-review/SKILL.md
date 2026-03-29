@@ -22,18 +22,27 @@ Review the spec artifacts for a change, identify ambiguities, and interactively 
 
 2. **Read all spec artifacts**
 
-   Read: `openspec/changes/<slug>/proposal.md`, `openspec/changes/<slug>/specs/*/spec.md` (all files), and `openspec/changes/<slug>/design.md` if present.
+   Read: `openspec/changes/<slug>/proposal.md`, `openspec/changes/<slug>/specs/*/spec.md` (all files), `openspec/changes/<slug>/design.md` if present, and `openspec/changes/<slug>/research.md` if present.
 
-3. **Identify grey areas and open questions**
+3. **Structured analysis**
 
-   For each artifact, look for:
+   **Assumption audit** — for each implicit assumption in the specs, surface it in this format:
+   - **Assumption**: what the spec assumes to be true
+   - **Evidence**: what in the spec artifacts (proposal/spec/design/research) or, if you inspect it, the codebase supports this. Cite concrete locations: for specs, use file paths and section headings (e.g., `openspec/changes/<slug>/specs/api/spec.md#Error handling`); for code, use real code file paths.
+   - **Consequence**: what breaks if the assumption is wrong
+   - **Confidence**: Confident | Likely | Unclear
+
+   **Spec-level checks** — for each artifact, look for:
    - Vague or ambiguous requirements (no clear pass/fail criteria)
    - Requirements missing scenarios
    - Scenarios with unclear GIVEN/WHEN/THEN conditions
-   - Implicit assumptions
    - Missing out-of-scope items
-   - Open design decisions
    - Conflicting requirements
+
+   **Implementation feasibility** — informed by research.md (if present):
+   - Do the specs assume integration points that research flagged as risky?
+   - Are there "Unclear" items in research.md that the specs haven't resolved?
+   - Are spec requirements feasible given the existing codebase patterns?
 
 4. **Present issues to developer**
 

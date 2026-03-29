@@ -7,12 +7,14 @@
 
 ### Step 1.1 — <!-- Step name --> <!-- HUMAN CHECKPOINT -->
 
+- **Built**: <!-- One sentence: what was implemented for this step -->
 - [ ] <!-- Action to perform -->
 - **Expected**: <!-- What should happen -->
 _(AC: specs/<!-- capability -->/spec.md § Scenario: <!-- scenario name -->)_
 
 ### Step 1.2 — <!-- Step name --> <!-- HUMAN CHECKPOINT -->
 
+- **Built**: <!-- One sentence: what was implemented for this step -->
 - [ ] <!-- Action to perform -->
 - **Expected**: <!-- What should happen -->
 
@@ -20,6 +22,7 @@ _(AC: specs/<!-- capability -->/spec.md § Scenario: <!-- scenario name -->)_
 
 ### Step 2.1 — <!-- Step name --> <!-- HUMAN CHECKPOINT -->
 
+- **Built**: <!-- One sentence: what was implemented for this step -->
 - [ ] <!-- Action to perform -->
 - **Expected**: <!-- What should happen -->
 
