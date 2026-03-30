@@ -7,7 +7,7 @@ The page must display a clock element showing the current time in HH:MM:SS forma
 The clock must update automatically every second to show the current time without requiring any user interaction or page refresh.
 
 ### Requirement: Visual style consistency
-The clock's visual styling must be consistent with the existing page aesthetic, using colors from the night sky palette (#fff9e6 or similar) and appropriate typography.
+The clock's visual styling must be consistent with the existing page aesthetic, using the night sky palette accent color (#fff9e6) and appropriate typography.
 
 ### Requirement: Non-interfering positioning
 The clock must be positioned so it does not overlap or interfere with the centered "Hello World" heading or obstruct the cursor lamp overlay effect.
@@ -27,10 +27,11 @@ The clock implementation must use vanilla JavaScript without introducing any ext
 - **AND** the clock should display the current time in HH:MM:SS format
 
 #### Scenario: Clock updates every second
-- **GIVEN** the hello world page is displayed with the clock visible
+- **GIVEN** the hello world page is displayed with the clock visible in the active/foreground tab
 - **WHEN** one second passes
 - **THEN** the clock should update to show the new current time
 - **AND** the seconds value should increment by 1 (or reset to 00 when reaching 60)
+- _Note: update frequency applies only to the active tab; browser throttling of background tabs is acceptable._
 
 #### Scenario: Clock shows correct time format
 - **GIVEN** the clock is displaying time
@@ -43,7 +44,7 @@ The clock implementation must use vanilla JavaScript without introducing any ext
 #### Scenario: Clock styling matches page theme
 - **GIVEN** the hello world page is displayed with its night sky background
 - **WHEN** viewing the clock element
-- **THEN** the clock text color should match the page's light accent color (#fff9e6 or similar)
+- **THEN** the clock text color should be #fff9e6
 - **AND** the clock font should be consistent with or complement the page typography
 - **AND** the clock should have appropriate contrast against the background
 
@@ -56,9 +57,9 @@ The clock implementation must use vanilla JavaScript without introducing any ext
 
 #### Scenario: Clock positioning remains fixed
 - **GIVEN** the clock is displayed on the page
-- **WHEN** the user moves their cursor or scrolls the page (if scrollable)
+- **WHEN** the user moves their cursor around the page
 - **THEN** the clock should remain in its designated position
-- **AND** the clock should not move or reposition based on user interactions
+- **AND** the clock should not move or reposition based on cursor movement
 
 ## Out of scope
 
@@ -72,3 +73,5 @@ The clock implementation must use vanilla JavaScript without introducing any ext
 - Time synchronization with external time servers
 - Mobile-specific touch interactions with the clock
 - Animation effects on time changes
+- JavaScript-disabled graceful degradation (clock simply won't render; no broken layout or placeholder required)
+- Screen reader / ARIA accessibility for the clock element
